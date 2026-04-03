@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>STOCK.PRO</title>
-<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0A0A0F;--surface:#13131A;--surface2:#1C1C26;--surface3:#26263A;
@@ -52,6 +52,72 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
 .slabel{font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;}
 .sval{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;}
 .g{color:var(--success);}.y{color:var(--warn);}.r{color:var(--danger);}.b{color:var(--info);}
+/* ── SHOP PANEL LIGHT MODE ── */
+#panel-shop{background:#F7F8FA;border-radius:16px;padding:24px 20px;margin-top:-4px;}
+#panel-shop .filter-row{margin-bottom:20px;}
+#panel-shop .fbtn{background:#fff;border:1.5px solid #E2E5EA;color:#555;border-radius:24px;font-size:13px;padding:7px 18px;font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+#panel-shop .fbtn.active{background:#111;border-color:#111;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.18);}
+.shop-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.shop-title{font-size:13px;font-weight:700;color:#888;letter-spacing:.06em;text-transform:uppercase;}
+.shop-count{font-size:12px;color:#AAA;}
+/* PRODUCT GRID - EC風 */
+.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px;}
+.pcard{background:#fff;border:none;border-radius:16px;padding:0;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.07);transition:box-shadow .2s,transform .2s;position:relative;animation:fu .35s ease both;display:flex;flex-direction:column;}
+.pcard:hover{box-shadow:0 8px 28px rgba(0,0,0,.13);transform:translateY(-3px);}
+.pcard.sold{opacity:.55;}.pcard.sold:hover{transform:none;box-shadow:0 2px 12px rgba(0,0,0,.07);}
+/* カードヘッダー（カラーバー） */
+.pcard-header{height:6px;width:100%;background:linear-gradient(90deg,#4F8EF7,#7B5EF8);}
+.pcard-header.cat-sneaker{background:linear-gradient(90deg,#F76E6E,#F7A56E);}
+.pcard-header.cat-card{background:linear-gradient(90deg,#6EF7C2,#6EB5F7);}
+.pcard-header.cat-game{background:linear-gradient(90deg,#A56EF7,#6E8FF7);}
+.pcard-header.cat-figure{background:linear-gradient(90deg,#F7D76E,#F7A56E);}
+.pcard-header.cat-cosme{background:linear-gradient(90deg,#F76EA5,#F76ECA);}
+.pcard-header.cat-apparel{background:linear-gradient(90deg,#6EF7A5,#6EF7D7);}
+.pcard-header.cat-magazine{background:linear-gradient(90deg,#F7F76E,#A5F76E);}
+.pcard-header.cat-other{background:linear-gradient(90deg,#C0C0C0,#E0E0E0);}
+/* カードボディ */
+.pcard-body{padding:18px 18px 16px;flex:1;display:flex;flex-direction:column;}
+.pcat-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:#F0F2F5;color:#666;border-radius:6px;padding:3px 9px;margin-bottom:10px;}
+.pname{font-family:'M PLUS Rounded 1c','BIZ UDPGothic',sans-serif;font-size:15px;font-weight:700;color:#111;margin-bottom:6px;line-height:1.45;}
+/* JAN・URL */
+.pjan{font-size:11px;color:#999;margin-bottom:5px;display:flex;align-items:center;gap:5px;}
+.pjan strong{color:#555;font-family:monospace;letter-spacing:.04em;}
+.purl{margin-bottom:10px;}
+.purl a{font-size:12px;color:#4F8EF7;text-decoration:none;display:inline-flex;align-items:center;gap:4px;font-weight:500;}
+.purl a:hover{text-decoration:underline;}
+/* 価格 */
+.pprice-row{display:flex;align-items:baseline;gap:4px;margin-bottom:14px;}
+.pprice{font-family:'M PLUS Rounded 1c','BIZ UDPGothic',sans-serif;font-size:22px;font-weight:800;color:#111;line-height:1;}
+.pprice-unit{font-size:12px;color:#999;font-weight:400;}
+/* 在庫バー */
+.bar-wrap{margin-bottom:14px;}
+.bar-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.bl{font-size:11px;color:#999;font-weight:500;}
+.bv{font-size:13px;font-weight:700;font-family:'BIZ UDPGothic',sans-serif;}
+.bv.ok{color:#16A34A;}.bv.low{color:#D97706;}.bv.zero{color:#DC2626;}
+.bar{height:5px;background:#EAECEF;border-radius:5px;overflow:hidden;}
+.bf{height:100%;border-radius:5px;transition:width .6s cubic-bezier(.4,0,.2,1);}
+.bf.ok{background:linear-gradient(90deg,#16A34A,#22C55E);}
+.bf.low{background:linear-gradient(90deg,#D97706,#F59E0B);}
+.bf.zero{background:#DC2626;}
+/* バッジ */
+.pbadge{position:absolute;top:14px;left:14px;font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:.04em;z-index:1;}
+.sold-badge{background:#DC2626;color:#fff;}
+.low-badge{background:#F59E0B;color:#fff;}
+/* 注文ボタン */
+.obtn{width:100%;padding:12px;background:#111;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'M PLUS Rounded 1c','BIZ UDPGothic',sans-serif;transition:background .15s,transform .1s;margin-top:auto;}
+.obtn:hover{background:#333;}.obtn:active{transform:scale(.98);}
+.obtn:disabled{background:#E5E7EB;color:#9CA3AF;cursor:not-allowed;}
+.obtn.sold-btn{background:#F3F4F6;color:#9CA3AF;cursor:not-allowed;}
+/* ローディング */
+#panel-shop .loading-wrap{background:transparent;}
+/* レスポンシブ */
+@media(max-width:600px){
+  #panel-shop{padding:16px 12px;}
+  .product-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;}
+  .pcard-body{padding:12px 12px 12px;}
+  .pprice{font-size:18px;}
+}
 
 /* PANELS */
 .panel{display:none;}.panel.active{display:block;}
@@ -253,6 +319,7 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
     </div>
     <div id="shop-content" style="display:none">
       <div class="filter-row" id="filter-row"></div>
+      <div class="shop-header"><span class="shop-title">在庫商品一覧</span><span class="shop-count" id="shop-header-count"></span></div>
       <div class="product-grid" id="product-grid"></div>
     </div>
   </div>
@@ -687,34 +754,44 @@ function renderFilters() {
 }
 function setFilter(c) { activeFilter = c; renderFilters(); renderShop(); }
 
+function catClass(cat) {
+  const map = {'スニーカー':'cat-sneaker','トレカ':'cat-card','ゲーム':'cat-game',
+    'フィギュア':'cat-figure','コスメ':'cat-cosme','アパレル':'cat-apparel','雑誌':'cat-magazine'};
+  return map[cat] || 'cat-other';
+}
 function renderShop() {
   const list = activeFilter === 'すべて' ? products : products.filter(p => p.category === activeFilter);
+  // ヘッダー更新
+  const hdr = document.getElementById('shop-header-count');
+  if (hdr) hdr.textContent = list.length + '件';
   document.getElementById('product-grid').innerHTML = list.map((p, i) => {
     const r = remain(p), st = stockState(p);
     const badge = r <= 0
-      ? `<div class="pbadge sold-badge">SOLD OUT</div>`
-      : r <= 5 ? `<div class="pbadge low-badge">残りわずか</div>` : '';
-    const janHtml = p.jan ? `<div class="pjan">JAN <span>${p.jan}</span></div>` : '';
-    const urlHtml = p.url ? `<div class="purl"><a href="${p.url}" target="_blank" rel="noopener">🔗 商品ページを確認する</a></div>` : '';
-    return `<div class="pcard ${r <= 0 ? 'sold' : ''}" style="animation-delay:${i * .05}s">
-      ${badge}
-      <div class="pcat">${p.category}</div>
-      <div class="pname">${p.name}</div>
-      ${janHtml}
-      <div class="pprice">¥${Number(p.price).toLocaleString()}<span> /個</span></div>
-      ${urlHtml}
-      <div class="bar-wrap">
-        <div class="bar-top">
-          <span class="bl">在庫数</span>
-          <span class="bv ${st}">${r <= 0 ? '在庫切れ' : r + '個'}</span>
-        </div>
-        <div class="bar"><div class="bf ${st}" style="width:${pct(p)}%"></div></div>
-      </div>
-      <button class="obtn" onclick="openOrderModal(${p.id})" ${r <= 0 ? 'disabled' : ''}>
-        ${r <= 0 ? '在庫切れ' : '注文・予約フォームへ →'}
-      </button>
-    </div>`;
-  }).join('') || '<div class="no-data" style="grid-column:1/-1">商品がありません</div>';
+      ? '<div class="pbadge sold-badge">SOLD OUT</div>'
+      : r <= 5 ? '<div class="pbadge low-badge">残りわずか</div>' : '';
+    const janHtml = p.jan
+      ? '<div class="pjan">JAN <strong>' + p.jan + '</strong></div>' : '';
+    const urlHtml = p.url
+      ? '<div class="purl"><a href="' + p.url + '" target="_blank" rel="noopener">🔗 商品ページを見る</a></div>' : '';
+    const stockLabel = r <= 0 ? '在庫切れ' : r <= 5 ? '残り' + r + '個' : r + '個';
+    return '<div class="pcard ' + (r <= 0 ? 'sold' : '') + '" style="animation-delay:' + (i * .05) + 's">'
+      + badge
+      + '<div class="pcard-header ' + catClass(p.category) + '"></div>'
+      + '<div class="pcard-body">'
+      + '<span class="pcat-tag">' + p.category + '</span>'
+      + '<div class="pname">' + p.name + '</div>'
+      + janHtml
+      + urlHtml
+      + '<div class="pprice-row"><span class="pprice">¥' + Number(p.price).toLocaleString() + '</span><span class="pprice-unit">/ 個</span></div>'
+      + '<div class="bar-wrap">'
+      + '<div class="bar-top"><span class="bl">在庫状況</span><span class="bv ' + st + '">' + stockLabel + '</span></div>'
+      + '<div class="bar"><div class="bf ' + st + '" style="width:' + pct(p) + '%"></div></div>'
+      + '</div>'
+      + '<button class="obtn ' + (r <= 0 ? 'sold-btn' : '') + '" onclick="openOrderModal(' + p.id + ')" ' + (r <= 0 ? 'disabled' : '') + '>'
+      + (r <= 0 ? '在庫切れ' : '注文・予約する →')
+      + '</button>'
+      + '</div></div>';
+  }).join('') || '<div style="grid-column:1/-1;text-align:center;padding:48px;color:#AAA;font-size:14px">商品がありません</div>';
 }
 
 function renderInventory() {
