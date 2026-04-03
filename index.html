@@ -79,6 +79,11 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
 .bar{height:3px;background:var(--border);border-radius:3px;overflow:hidden;}
 .bf{height:100%;border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1);}
 .bf.ok{background:var(--success);}.bf.low{background:var(--warn);}.bf.zero{background:var(--danger);}
+.pjan{font-size:11px;color:var(--muted);margin-bottom:4px;display:flex;align-items:center;gap:5px;}
+.pjan span{font-family:'BIZ UDPGothic',monospace;color:var(--text);font-size:12px;letter-spacing:.04em;}
+.purl{margin-bottom:12px;}
+.purl a{font-size:11px;color:var(--info);text-decoration:none;word-break:break-all;display:inline-flex;align-items:center;gap:4px;}
+.purl a:hover{text-decoration:underline;opacity:.85;}
 .obtn{width:100%;padding:9px;background:var(--accent);color:#000;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:'BIZ UDPGothic','Noto Sans JP',sans-serif;transition:opacity .15s,transform .1s;}
 .obtn:hover{opacity:.87;}.obtn:active{transform:scale(.97);}
 .obtn:disabled{background:var(--surface2);color:var(--muted);cursor:not-allowed;}
@@ -275,9 +280,10 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
           <thead><tr>
             <th>商品名</th><th>カテゴリ</th><th>単価</th>
             <th>在庫数</th><th>予約済</th><th>残数</th><th>状態</th>
+            <th>JANコード</th><th>参考URL</th>
             <th style="min-width:200px">操作</th>
           </tr></thead>
-          <tbody id="inv-tbody"><tr><td colspan="8" class="no-data"><div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0 auto"></div></td></tr></tbody>
+          <tbody id="inv-tbody"><tr><td colspan="10" class="no-data"><div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0 auto"></div></td></tr></tbody>
         </table>
       </div>
     </div>
@@ -684,11 +690,15 @@ function renderShop() {
     const badge = r <= 0
       ? `<div class="pbadge sold-badge">SOLD OUT</div>`
       : r <= 5 ? `<div class="pbadge low-badge">残りわずか</div>` : '';
+    const janHtml = p.jan ? `<div class="pjan">JAN <span>${p.jan}</span></div>` : '';
+    const urlHtml = p.url ? `<div class="purl"><a href="${p.url}" target="_blank" rel="noopener">🔗 商品ページを確認する</a></div>` : '';
     return `<div class="pcard ${r <= 0 ? 'sold' : ''}" style="animation-delay:${i * .05}s">
       ${badge}
       <div class="pcat">${p.category}</div>
       <div class="pname">${p.name}</div>
+      ${janHtml}
       <div class="pprice">¥${Number(p.price).toLocaleString()}<span> /個</span></div>
+      ${urlHtml}
       <div class="bar-wrap">
         <div class="bar-top">
           <span class="bl">在庫数</span>
@@ -708,8 +718,11 @@ function renderInventory() {
     const r = remain(p), st = stockState(p);
     const tagClass = st === 'ok' ? 'tag-ok' : st === 'low' ? 'tag-low' : 'tag-zero';
     const tagLabel = st === 'ok' ? '在庫あり' : st === 'low' ? '残りわずか' : '在庫切れ';
+    const urlCell = p.url
+      ? `<a href="${p.url}" target="_blank" rel="noopener" style="color:var(--info);font-size:11px;text-decoration:none">🔗 リンク</a>`
+      : '<span style="color:var(--muted);font-size:11px">—</span>';
     return `<tr>
-      <td style="font-weight:500;max-width:180px">${p.name}</td>
+      <td style="font-weight:500;max-width:160px">${p.name}</td>
       <td>${p.category}</td>
       <td>¥${Number(p.price).toLocaleString()}</td>
       <td>
@@ -719,8 +732,10 @@ function renderInventory() {
         </div>
       </td>
       <td style="color:var(--warn)">${p.reserved}</td>
-      <td style="font-family:'Syne',sans-serif;font-weight:700;color:${r <= 0 ? 'var(--danger)' : r <= 5 ? 'var(--warn)' : 'var(--success)'}">${r}</td>
+      <td style="font-family:'BIZ UDPGothic',sans-serif;font-weight:700;color:${r <= 0 ? 'var(--danger)' : r <= 5 ? 'var(--warn)' : 'var(--success)'}">${r}</td>
       <td><span class="tag ${tagClass}">${tagLabel}</span></td>
+      <td style="font-size:12px;font-family:'BIZ UDPGothic',monospace;color:var(--text)">${p.jan || '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${urlCell}</td>
       <td>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="btn btn-i" onclick="openEditModal(${p.id})">✏️ 編集</button>
@@ -729,7 +744,7 @@ function renderInventory() {
         </div>
       </td>
     </tr>`;
-  }).join('') || '<tr><td colspan="8" class="no-data">商品がありません</td></tr>';
+  }).join('') || '<tr><td colspan="10" class="no-data">商品がありません</td></tr>';
 }
 
 function renderOrderLog() {
