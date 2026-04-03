@@ -78,7 +78,7 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
 /* カードボディ */
 .pcard-body{padding:18px 18px 16px;flex:1;display:flex;flex-direction:column;}
 .pcat-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:#F0F2F5;color:#666;border-radius:6px;padding:3px 9px;margin-bottom:10px;}
-.pname{font-family:'M PLUS Rounded 1c','BIZ UDPGothic',sans-serif;font-size:15px;font-weight:700;color:#111;margin-bottom:6px;line-height:1.45;}
+.pname{font-family:'M PLUS Rounded 1c','BIZ UDPGothic',sans-serif;font-size:16px;font-weight:700;color:#1A1A1A !important;margin-bottom:8px;line-height:1.5;}
 /* JAN・URL */
 .pjan{font-size:11px;color:#999;margin-bottom:5px;display:flex;align-items:center;gap:5px;}
 .pjan strong{color:#555;font-family:monospace;letter-spacing:.04em;}
@@ -87,7 +87,7 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
 .purl a:hover{text-decoration:underline;}
 /* 価格 */
 .pprice-row{display:flex;align-items:baseline;gap:4px;margin-bottom:14px;}
-.pprice{font-family:'M PLUS Rounded 1c','BIZ UDPGothic',sans-serif;font-size:22px;font-weight:800;color:#111;line-height:1;}
+.pprice{font-family:'M PLUS Rounded 1c','BIZ UDPGothic',sans-serif;font-size:20px;font-weight:800;color:#1A1A1A !important;line-height:1;}
 .pprice-unit{font-size:12px;color:#999;font-weight:400;}
 /* 在庫バー */
 .bar-wrap{margin-bottom:14px;}
@@ -116,7 +116,7 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
   #panel-shop{padding:16px 12px;}
   .product-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;}
   .pcard-body{padding:12px 12px 12px;}
-  .pprice{font-size:18px;}
+  .pprice{font-size:17px;}
 }
 
 /* PANELS */
@@ -134,9 +134,7 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
 .pcard.sold{opacity:.42;}.pcard.sold:hover{transform:none;}
 @keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .pcat{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
-.pname{font-family:'BIZ UDPGothic','Noto Sans JP',sans-serif;font-size:15px;font-weight:700;margin-bottom:4px;line-height:1.3;}
-.pprice{font-size:18px;font-weight:700;color:var(--accent);margin-bottom:13px;font-family:'BIZ UDPGothic','Noto Sans JP',sans-serif;}
-.pprice span{font-size:11px;color:var(--muted);font-family:'Noto Sans JP';font-weight:400;}
+/* pname・pprice はショップ用CSS（上部）で定義済み */
 .bar-wrap{margin-bottom:12px;}
 .bar-top{display:flex;justify-content:space-between;margin-bottom:5px;}
 .bl{font-size:11px;color:var(--muted);}
