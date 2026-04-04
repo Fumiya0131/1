@@ -940,9 +940,7 @@ function renderGasOrderLog() {
     : gasOrders.slice().reverse().map(o => {
       const btn = o.invoiced
         ? '<span class="tag tag-ok" style="font-size:10px">発行済</span>'
-        : '<button class="btn btn-i" style="font-size:11px;padding:4px 10px" onclick='openInvoiceModal(' +
-          JSON.stringify({rowIndex:o.rowIndex,name:o.name,product:o.product,qty:o.qty,total:o.total,address:o.address||''}) +
-          ')">📄 請求書発行</button>';
+        : '<button class="btn btn-i" style="font-size:11px;padding:4px 10px" onclick="openInvoiceModalByIndex(' + idx + ')">📄 請求書発行</button>';
       return '<tr>' +
         '<td style="font-size:11px">' + (o.datetime||'') + '</td>' +
         '<td style="font-weight:700">' + o.name + '</td>' +
@@ -956,6 +954,11 @@ function renderGasOrderLog() {
 
 // ── 請求書発行モーダル ──────────────────────────────
 let _invData = {};
+function openInvoiceModalByIndex(idx) {
+  const o = gasOrders.slice().reverse()[idx];
+  if (!o) return;
+  openInvoiceModal({rowIndex:o.rowIndex, name:o.name, product:o.product, qty:o.qty, total:o.total, address:o.address||''});
+}
 function openInvoiceModal(data) {
   _invData = data;
   document.getElementById('inv-name').textContent    = data.name;
