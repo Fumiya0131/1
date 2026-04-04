@@ -439,6 +439,19 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
         <button class="btn btn-i" onclick="loadOrdersForInvoice()" style="font-size:11px">↻ 最新データを取得</button>
       </div>
       <div class="info-box"><strong>📋 商品入荷後に「📄 請求書発行」ボタンで顧客へ自動送付できます。</strong><br>サイズを選ぶと住所から送料が自動計算されます。</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+        <select id="filter-year" onchange="filterOrders()" style="padding:6px 10px;background:var(--bg);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-size:12px">
+          <option value="">すべての年</option>
+        </select>
+        <select id="filter-month" onchange="filterOrders()" style="padding:6px 10px;background:var(--bg);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-size:12px">
+          <option value="">すべての月</option>
+          <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+          <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+          <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+          <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+        </select>
+        <span id="order-count" style="font-size:11px;color:var(--muted)"></span>
+      </div>
       <div style="overflow-x:auto">
         <table class="tbl">
           <thead><tr><th>日時</th><th>氏名</th><th>商品名</th><th>数量</th><th>種別</th><th>合計</th><th>請求書</th></tr></thead>
@@ -780,7 +793,7 @@ async function loadProducts() {
 }
 
 // ── ヘルパー ──────────────────────────────────────
-function remain(p) { return Math.max(0, Number(p.remain ?? (p.stock - p.reserved))); }
+function remain(p) { return Math.max(0, Number(p.stock) - Number(p.reserved)); }
 function stockState(p) { const r = remain(p); return r <= 0 ? 'zero' : r <= 5 ? 'low' : 'ok'; }
 function pct(p) { return p.stock === 0 ? 0 : Math.round((remain(p) / p.stock) * 100); }
 
@@ -1012,13 +1025,12 @@ async function updateStock(id) {
     // ローカルのproductsを即時更新して購入者画面に反映
     const p = products.find(x => x.id == id);
     if (p) {
-      p.stock = v;
-      p.reserved = Number(p.reserved);
-      p.remain = Math.max(0, v - p.reserved);
+      p.stock    = v;
+      p.reserved = Number(p.reserved || 0);
       renderAll();
     }
-    showToast('在庫数・残数を更新しました（スプレッドシートにも反映済み）');
-    loadProducts(); // GASから最新データを再取得
+    showToast('在庫数・残数を更新しました');
+    await loadProducts(); // GASから最新データを再取得
   } catch (e) { showToast('更新失敗: ' + e.message, true); }
 }
 async function resetReserved(id) {
@@ -1274,23 +1286,61 @@ async function loadOrdersForInvoice() {
     showToast('取得完了（' + gasOrders.length + '件）');
   } catch(e) { showToast('取得失敗: ' + e.message, true); }
 }
+function buildOrderRow(o, realIdx) {
+  const btn = o.invoiced
+    ? '<span class="tag tag-ok" style="font-size:10px">発行済</span>'
+    : '<button class="btn btn-i" style="font-size:11px;padding:4px 10px" onclick="openInvModal(' + realIdx + ')">📄 請求書発行</button>';
+  return '<tr><td style="font-size:11px">' + (o.datetime||'') + '</td>' +
+    '<td style="font-weight:700">' + (o.name||'') + '</td>' +
+    '<td>' + (o.product||'') + '</td><td>' + (o.qty||0) + '個</td>' +
+    '<td><span class="tag ' + (o.type==='購入'?'tag-order':'tag-reserve') + '">' + (o.type||'') + '</span></td>' +
+    '<td>¥' + Number(o.total||0).toLocaleString() + '</td>' +
+    '<td>' + btn + '</td></tr>';
+}
+
+function updateYearFilter() {
+  const years = [...new Set(gasOrders.map(o => {
+    const m = (o.datetime||'').match(/^(\d{4})/);
+    return m ? m[1] : null;
+  }).filter(Boolean))].sort();
+  const sel = document.getElementById('filter-year');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">すべての年</option>' +
+    years.map(y => '<option value="' + y + '"' + (y===cur?' selected':'') + '>' + y + '年</option>').join('');
+}
+
+function filterOrders() {
+  const year  = document.getElementById('filter-year').value;
+  const month = document.getElementById('filter-month').value;
+  const list  = gasOrders.slice().reverse();
+  const filtered = list.filter((o, i) => {
+    const dt = o.datetime || '';
+    if (year  && !dt.startsWith(year)) return false;
+    if (month) {
+      const m = dt.match(/^(\d{4})\/(\d{2})/);
+      if (!m || parseInt(m[2]) !== parseInt(month)) return false;
+    }
+    return true;
+  });
+  const countEl = document.getElementById('order-count');
+  if (countEl) countEl.textContent = filtered.length + '件';
+  document.getElementById('order-tbody').innerHTML = filtered.length === 0
+    ? '<tr><td colspan="7" class="no-data">該当する注文がありません</td></tr>'
+    : filtered.map((o) => {
+        const realIdx = gasOrders.indexOf(o);
+        return buildOrderRow(o, realIdx);
+      }).join('');
+}
+
 function renderGasOrders() {
   if (!gasOrders.length) {
     document.getElementById('order-tbody').innerHTML = '<tr><td colspan="7" class="no-data">注文がありません</td></tr>';
+    const countEl = document.getElementById('order-count');
+    if (countEl) countEl.textContent = '0件';
     return;
   }
-  document.getElementById('order-tbody').innerHTML = gasOrders.slice().reverse().map((o, i) => {
-    const realIdx = gasOrders.length - 1 - i;
-    const btn = o.invoiced
-      ? '<span class="tag tag-ok" style="font-size:10px">発行済</span>'
-      : '<button class="btn btn-i" style="font-size:11px;padding:4px 10px" onclick="openInvModal(' + realIdx + ')">📄 請求書発行</button>';
-    return '<tr><td style="font-size:11px">' + (o.datetime||'') + '</td>' +
-      '<td style="font-weight:700">' + (o.name||'') + '</td>' +
-      '<td>' + (o.product||'') + '</td><td>' + (o.qty||0) + '個</td>' +
-      '<td><span class="tag ' + (o.type==='購入'?'tag-order':'tag-reserve') + '">' + (o.type||'') + '</span></td>' +
-      '<td>¥' + Number(o.total||0).toLocaleString() + '</td>' +
-      '<td>' + btn + '</td></tr>';
-  }).join('');
+  updateYearFilter();
+  filterOrders();
 }
 
 // =========================================================
