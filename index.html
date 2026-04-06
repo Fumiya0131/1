@@ -690,12 +690,7 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
       </div>
       <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent)" id="m-price"></div>
     </div>
-    <div class="mfield"><label>購入タイプ</label>
-      <div class="type-toggle">
-        <button class="type-btn active" id="type-btn-order" onclick="setOrderType('order')">購入</button>
-        <button class="type-btn" id="type-btn-reserve" onclick="setOrderType('reserve')">予約</button>
-      </div>
-    </div>
+
     <div class="mfield"><label>数量</label>
       <div class="qty-row" style="align-items:center;gap:12px">
         <button class="cart-qty-btn" onclick="changeModalQty(-1)">−</button>
@@ -1084,14 +1079,13 @@ function openCartAddModal(id) {
   currentPid = id;
   modalMaxQty = remain(p);
   modalQty = 1;
-  currentOrderType = 'order';
+  currentOrderType = 'order'; // 予約購入で固定
   document.getElementById('m-cat').textContent   = p.category;
   document.getElementById('m-name').textContent  = p.name;
   document.getElementById('m-jan').textContent   = p.jan ? '(' + p.jan + ')' : '';
   document.getElementById('m-price').textContent = '¥' + Number(p.price).toLocaleString();
   document.getElementById('m-remain-note').textContent = '残' + modalMaxQty + '個';
-  document.getElementById('type-btn-order').classList.add('active');
-  document.getElementById('type-btn-reserve').classList.remove('active');
+
   updateModalQtyDisplay();
   openOverlay('cart-add-overlay');
 }
@@ -1119,6 +1113,7 @@ function addToCart() {
   const p = products.find(x => x.id == currentPid);
   if (!p) return;
   // 既存カート内に同じ商品・同じタイプがあれば数量追加
+  currentOrderType = 'order';
   const existing = cart.find(i => i.id === p.id && i.type === currentOrderType);
   if (existing) {
     const max = currentOrderType === 'reserve' ? 99 : remain(p);
@@ -1145,7 +1140,7 @@ function renderCart() {
     const catEmoji = {スニーカー:'👟',トレカ:'🃏',ゲーム:'🎮',フィギュア:'🗿',コスメ:'💄',アパレル:'👕',雑誌:'📖'};
     list.innerHTML = cart.map((item, idx) => {
       const emoji = catEmoji[item.category] || '📦';
-      const typeLabel = item.type === 'order' ? '購入' : '予約';
+      const typeLabel = '予約購入';
       const typeColor = item.type === 'order' ? 'var(--info)' : 'var(--warn)';
       return '<div class="cart-item" id="cart-item-' + idx + '">' +
         '<div class="cart-item-img">' + emoji + '</div>' +
@@ -1202,7 +1197,7 @@ function renderCheckoutSummary() {
   document.getElementById('co-tax').textContent      = '¥' + tax.toLocaleString();
   document.getElementById('co-total').textContent    = '¥' + sub.toLocaleString();
   document.getElementById('co-order-summary').innerHTML = cart.map(item => {
-    const typeLabel = item.type === 'order' ? '購入' : '予約';
+    const typeLabel = '予約購入';
     return '<div class="checkout-order-item">' +
       '<div>' +
         '<div style="font-weight:600;font-size:13px">' + item.name + '</div>' +
@@ -1247,7 +1242,7 @@ async function submitCartOrder() {
         productId: item.id,
         name, phone, email, address, discord, note,
         qty: item.qty,
-        type: item.type
+        type: 'order'
       });
       if (r?.error) { errors.push(item.name + ': ' + r.error); allOk = false; }
       else {
