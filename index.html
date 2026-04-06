@@ -1273,8 +1273,8 @@ function renderShippingTable() {
   ).join('');
 }
 function calcShippingClient(address, size) {
-  const addr = (address||'').replace(/〒\d{3}-?\d{4}\s*/,'').trim();
-  const m = addr.match(/^([^\s\d]+?[都道府県])/);
+  const addr = (address||'').replace(/[〒]?\d{3,4}-?\d{4}[\s　]*/,'').trim();
+  const m = addr.match(/([^ 　\d]+?[都道府県])/);
   if (!m) return null;
   const idx = PREF_MAP[m[1]];
   return (idx !== undefined && SHIP_DATA[parseInt(size)]) ? SHIP_DATA[parseInt(size)][idx] : null;
@@ -1374,8 +1374,8 @@ function updateFeePreview() {
   const el   = document.getElementById('inv-fee');
   if (!addr) { el.textContent = '※ 住所が未登録です'; el.style.color = 'var(--warn)'; return; }
   const fee = calcShippingClient(addr, size);
-  const cleanAddr = addr.replace(/〒\d{3}-?\d{4}\s*/,'').trim();
-  const m   = cleanAddr.match(/^([^\s\d]+?[都道府県])/);
+  const cleanAddr = addr.replace(/[〒]?\d{3,4}-?\d{4}[\s　]*/,'').trim();
+  const m   = cleanAddr.match(/([^ 　\d]+?[都道府県])/);
   const ri  = m ? PREF_MAP[m[1]] : undefined;
   if (fee !== null && ri !== undefined) {
     el.textContent = '→ ' + (m?m[1]:'') + '（' + SHIP_REGIONS[ri] + '）　送料：¥' + fee.toLocaleString();
