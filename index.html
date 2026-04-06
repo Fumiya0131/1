@@ -567,7 +567,10 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
       <div class="mfield req"><label>電話番号</label><input type="tel" id="m-phone" placeholder="090-0000-0000"></div>
       <div class="mfield req"><label>メールアドレス</label><input type="email" id="m-email" placeholder="example@mail.com"></div>
     </div>
-    <div class="mfield req"><label>住所（〒 都道府県〜番地）</label><input type="text" id="m-address" placeholder="〒000-0000 東京都〇〇区〇〇 1-2-3"></div>
+    <div class="mrow">
+      <div class="mfield req" style="max-width:160px"><label>郵便番号</label><input type="text" id="m-zip" placeholder="000-0000" maxlength="8"></div>
+      <div class="mfield req"><label>都道府県・市区町村・番地</label><input type="text" id="m-address" placeholder="東京都〇〇区〇〇 1-2-3"></div>
+    </div>
     <div class="mfield"><label>Discord ID</label><input type="text" id="m-discord" placeholder="username#1234"></div>
     <div class="mfield"><label>備考・ご要望</label><textarea id="m-note" placeholder="カラー指定・梱包希望など"></textarea></div>
     <div class="agree-box">
@@ -921,7 +924,7 @@ function openOrderModal(id) {
   document.getElementById('m-remain-note').textContent = `残${r}個`;
   document.getElementById('m-qty').max = r;
   document.getElementById('m-qty').value = 1;
-  ['m-fullname','m-phone','m-email','m-address','m-discord','m-note'].forEach(i => document.getElementById(i).value = '');
+  ['m-fullname','m-phone','m-email','m-zip','m-address','m-discord','m-note'].forEach(i => document.getElementById(i).value = '');
   document.getElementById('m-agree').checked = false;
   document.getElementById('btn-submit').disabled = false;
   document.getElementById('submitting-msg').style.display = 'none';
@@ -933,8 +936,10 @@ async function submitOrder() {
   const name    = document.getElementById('m-fullname').value.trim();
   const phone   = document.getElementById('m-phone').value.trim();
   const email   = document.getElementById('m-email').value.trim();
-  const address = document.getElementById('m-address').value.trim();
-  if (!name || !phone || !email || !address) { showToast('必須項目（*）を入力してください', true); return; }
+  const zip     = document.getElementById('m-zip').value.trim();
+  const addrRaw = document.getElementById('m-address').value.trim();
+  const address = (zip ? '〒' + zip + ' ' : '') + addrRaw; // 結合して保存
+  if (!name || !phone || !email || !zip || !addrRaw) { showToast('必須項目（*）を入力してください', true); return; }
   const p    = products.find(x => x.id == currentPid);
   const qty  = parseInt(document.getElementById('m-qty').value) || 1;
   const r    = remain(p);
@@ -1268,7 +1273,8 @@ function renderShippingTable() {
   ).join('');
 }
 function calcShippingClient(address, size) {
-  const m = (address||'').match(/(.+?[都道府県])/);
+  const addr = (address||'').replace(/〒\d{3}-?\d{4}\s*/,'').trim();
+  const m = addr.match(/^([^\s\d]+?[都道府県])/);
   if (!m) return null;
   const idx = PREF_MAP[m[1]];
   return (idx !== undefined && SHIP_DATA[parseInt(size)]) ? SHIP_DATA[parseInt(size)][idx] : null;
@@ -1368,7 +1374,8 @@ function updateFeePreview() {
   const el   = document.getElementById('inv-fee');
   if (!addr) { el.textContent = '※ 住所が未登録です'; el.style.color = 'var(--warn)'; return; }
   const fee = calcShippingClient(addr, size);
-  const m   = addr.match(/(.+?[都道府県])/);
+  const cleanAddr = addr.replace(/〒\d{3}-?\d{4}\s*/,'').trim();
+  const m   = cleanAddr.match(/^([^\s\d]+?[都道府県])/);
   const ri  = m ? PREF_MAP[m[1]] : undefined;
   if (fee !== null && ri !== undefined) {
     el.textContent = '→ ' + (m?m[1]:'') + '（' + SHIP_REGIONS[ri] + '）　送料：¥' + fee.toLocaleString();
