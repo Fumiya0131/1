@@ -653,6 +653,12 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
         <div style="margin-top:10px">
           <div class="ff"><label>納期目安（任意）</label><input type="date" id="f-delivery"></div>
         </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+          <div class="ff"><label>種別</label>
+            <select id="f-ptype"><option value="在庫品">在庫品（即発送）</option><option value="予約品">予約品（入荷待ち）</option></select>
+          </div>
+          <div class="ff"><label>入荷予定日（予約品の場合）</label><input type="date" id="f-arrival"></div>
+        </div>
         <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
           <button class="btn btn-primary" onclick="addProduct()">➕ 商品を追加する</button>
           <span style="font-size:11px;color:var(--muted)">追加後すぐに在庫一覧・購入者画面に反映されます</span>
@@ -697,7 +703,7 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
       </div>
       <div style="overflow-x:auto">
         <table class="tbl">
-          <thead><tr><th>日時</th><th>氏名</th><th>商品名</th><th>数量</th><th>種別</th><th>合計</th><th>請求書</th></tr></thead>
+          <thead><tr><th>注文番号</th><th>日時</th><th>氏名</th><th>商品</th><th>グループ</th><th>合計</th><th>請求書</th></tr></thead>
           <tbody id="order-tbody"><tr><td colspan="7" class="no-data">「最新データを取得」をクリックしてください</td></tr></tbody>
         </table>
       </div>
@@ -1062,6 +1068,10 @@ function renderShop() {
       : r <= 5 ? '<div class="pbadge low-badge">残りわずか</div>' : '';
     const janHtml = p.jan
       ? '<div class="pjan">JAN <strong>' + p.jan + '</strong></div>' : '';
+    const typeBadge = p.type === '予約品'
+      ? '<div class="pbadge" style="background:#7C3AED;color:#fff;top:14px;right:14px;left:auto">予約品' +
+        (p.arrivalDate ? '　' + p.arrivalDate : '') + '</div>'
+      : '';
     const deliveryHtml = p.delivery
       ? (function(d){
           try {
@@ -1075,6 +1085,7 @@ function renderShop() {
     const stockLabel = r <= 0 ? '在庫切れ' : r <= 5 ? '残り' + r + '個' : r + '個';
     return '<div class="pcard ' + (r <= 0 ? 'sold' : '') + '" style="animation-delay:' + (i * .05) + 's">'
       + badge
+      + typeBadge
       + '<div class="pcard-header ' + catClass(p.category) + '"></div>'
       + '<div class="pcard-body">'
       + '<span class="pcat-tag">' + p.category + '</span>'
@@ -1352,28 +1363,6 @@ async function submitCartOrder() {
   const errors = [];
 
   // カート内の商品を1件ずつ送信
-  for (const item of cart) {
-    try {
-      const r = await gasPost({
-        action: 'submitOrder',
-        productId: item.id,
-        name, phone, email, address, building, discord, note,
-        qty: item.qty,
-        type: 'order'
-      });
-      if (r?.error) { errors.push(item.name + ': ' + r.error); allOk = false; }
-      else {
-        // ローカルのproductsを更新
-        const p = products.find(x => x.id == item.id);
-        if (p && item.type === 'order') {
-          p.reserved = Number(p.reserved) + item.qty;
-          p.remain   = Math.max(0, Number(p.remain) - item.qty);
-        }
-        const dt = new Date().toLocaleDateString('ja-JP') + ' ' + new Date().toTimeString().slice(0,5);
-        orderLog.push({ datetime: dt, name, productName: item.name, qty: item.qty, type: item.type, total: item.price * item.qty });
-      }
-    } catch(e) { errors.push(item.name + ': ' + e.message); allOk = false; }
-  }
 
   localStorage.setItem('local_orders', JSON.stringify(orderLog));
 
@@ -1527,9 +1516,11 @@ function openEditModal(id) {
   document.getElementById('edit-cat').value = p.category;
   document.getElementById('edit-price').value = p.price;
   document.getElementById('edit-stock').value = p.stock;
-  document.getElementById('edit-jan').value = p.jan || '';
-  document.getElementById('edit-url').value = p.url || '';
+  document.getElementById('edit-jan').value      = p.jan || '';
+  document.getElementById('edit-url').value      = p.url || '';
   document.getElementById('edit-delivery').value = p.delivery || '';
+  document.getElementById('edit-ptype').value    = p.type || '在庫品';
+  document.getElementById('edit-arrival').value  = p.arrivalDate || '';
   openOverlay('edit-overlay');
 }
 async function saveEdit() {
@@ -1540,10 +1531,12 @@ async function saveEdit() {
   const stock = parseInt(document.getElementById('edit-stock').value);
   const jan      = document.getElementById('edit-jan').value.trim();
   const url      = document.getElementById('edit-url').value.trim();
-  const delivery = document.getElementById('edit-delivery').value.trim();
+  const delivery    = document.getElementById('edit-delivery').value;
+  const productType = document.getElementById('edit-ptype').value;
+  const arrivalDate = document.getElementById('edit-arrival').value;
   if (!name || isNaN(price) || isNaN(stock)) { showToast('すべての項目を入力してください', true); return; }
   try {
-    const r = await gasPost({ action:'editProduct', productId:id, name, category:cat, price, stock, jan, url, delivery });
+    const r = await gasPost({ action:'editProduct', productId:id, name, category:cat, price, stock, jan, url, delivery, productType, arrivalDate });
     if (r?.error) throw new Error(r.error);
     closeOverlay('edit-overlay');
     renderAll();
@@ -1610,12 +1603,14 @@ async function addProduct() {
   const stock = parseInt(document.getElementById('f-stock').value);
   const jan      = document.getElementById('f-jan').value.trim();
   const url      = document.getElementById('f-url').value.trim();
-  const delivery = document.getElementById('f-delivery').value.trim();
+  const delivery    = document.getElementById('f-delivery').value;
+  const productType = document.getElementById('f-ptype').value;
+  const arrivalDate = document.getElementById('f-arrival').value;
   if (!name || isNaN(price) || isNaN(stock)) { showToast('すべての項目を入力してください', true); return; }
   try {
-    const r = await gasPost({ action:'addProduct', name, category:cat, price, stock, jan, url, delivery });
+    const r = await gasPost({ action:'addProduct', name, category:cat, price, stock, jan, url, delivery, type:productType, arrivalDate });
     if (r?.error) throw new Error(r.error);
-    ['f-name','f-price','f-stock','f-jan','f-url','f-delivery'].forEach(i => document.getElementById(i).value = '');
+    ['f-name','f-price','f-stock','f-jan','f-url','f-delivery','f-arrival'].forEach(i => document.getElementById(i).value = '');
     showToast('商品を追加しました');
     loadProducts();
   } catch (e) { showToast('追加失敗: ' + e.message, true); }
@@ -1852,10 +1847,15 @@ function buildOrderRow(o, realIdx) {
   const btn = o.invoiced
     ? '<span class="tag tag-ok" style="font-size:10px">発行済</span>'
     : '<button class="btn btn-i" style="font-size:11px;padding:4px 10px" onclick="openInvModal(' + realIdx + ')">📄 請求書発行</button>';
-  return '<tr><td style="font-size:11px">' + (o.datetime||'') + '</td>' +
+  const groupLabel = o.group === '在庫品'
+    ? '<span class="tag tag-ok">在庫品</span>'
+    : '<span class="tag tag-reserve">' + (o.group||'予約品') + '</span>';
+  const itemList = (o.items||[]).map(i => i.name + '×' + i.qty + '個').join('、');
+  return '<tr><td style="font-size:10px;font-family:monospace">' + (o.orderNo||'') + '</td>' +
+    '<td style="font-size:11px">' + (o.datetime||'') + '</td>' +
     '<td style="font-weight:700">' + (o.name||'') + '</td>' +
-    '<td>' + (o.product||'') + '</td><td>' + (o.qty||0) + '個</td>' +
-    '<td><span class="tag ' + (o.type==='購入'?'tag-order':'tag-reserve') + '">' + (o.type||'') + '</span></td>' +
+    '<td style="font-size:12px">' + itemList + '</td>' +
+    '<td>' + groupLabel + '</td>' +
     '<td>¥' + Number(o.total||0).toLocaleString() + '</td>' +
     '<td>' + btn + '</td></tr>';
 }
@@ -1913,9 +1913,11 @@ function openInvModal(idx) {
   _invOrder = gasOrders[idx];
   if (!_invOrder) return;
   document.getElementById('inv-name').textContent    = _invOrder.name;
-  document.getElementById('inv-product').textContent = _invOrder.product;
-  document.getElementById('inv-qty').textContent     = _invOrder.qty + '個';
-  document.getElementById('inv-total').textContent   = '¥' + Number(_invOrder.total).toLocaleString();
+  const itemList = (_invOrder.items||[]).map(i => i.name + " × " + i.qty + "個").join("\n");
+  document.getElementById('inv-product').textContent = itemList;
+  const total = _invOrder.total || (_invOrder.items||[]).reduce((s,i)=>s+i.subtotal,0);
+  document.getElementById('inv-qty').textContent     = (_invOrder.items||[]).reduce((s,i)=>s+i.qty,0) + '個';
+  document.getElementById('inv-total').textContent   = '¥' + Number(total).toLocaleString();
   document.getElementById('inv-size').value = '80';
   document.getElementById('btn-inv-submit').disabled = false;
   document.getElementById('inv-sending').style.display = 'none';
@@ -1944,7 +1946,13 @@ async function submitInvoice() {
   document.getElementById('btn-inv-submit').disabled = true;
   document.getElementById('inv-sending').style.display = 'block';
   try {
-    const r = await gasPost({ action:'generateInvoice', orderRowIndex:_invOrder.rowIndex, size });
+    const r = await gasPost({
+      action: 'generateInvoice',
+      orderNo:    _invOrder.orderNo,
+      group:      _invOrder.group,
+      rowIndices: _invOrder.rowIndices,
+      size
+    });
     if (r?.error) throw new Error(r.error);
     closeOverlay('inv-overlay');
     showToast('請求書（' + r.invoiceNo + '）を発行・送信しました');
