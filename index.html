@@ -844,6 +844,15 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
       <div class="mfield"><label>参考URL</label><input type="text" id="edit-url" placeholder="https://example.com/item"></div>
     </div>
     <div class="mfield"><label>納期目安（任意）</label><input type="date" id="edit-delivery"></div>
+    <div class="mrow">
+      <div class="mfield"><label>種別</label>
+        <select id="edit-ptype">
+          <option value="在庫品">在庫品（即発送）</option>
+          <option value="予約品">予約品（入荷待ち）</option>
+        </select>
+      </div>
+      <div class="mfield"><label>入荷予定日（予約品の場合）</label><input type="date" id="edit-arrival"></div>
+    </div>
     <div class="mactions">
       <button class="btn btn-cancel" onclick="closeOverlay('edit-overlay')">キャンセル</button>
       <button class="btn btn-primary" style="flex:2" onclick="saveEdit()">変更を保存する</button>
