@@ -1730,7 +1730,7 @@ async function doLogin() {
   const pw = document.getElementById('login-pw').value;
   if (!pw) return;
   try {
-    const r = await gasPost({ action: 'verifyPassword', password: pw });
+    const r = await gasPost({ action: 'checkPassword', password: pw });
     if (r?.success) {
       closeOverlay('login-overlay');
       _grantAdmin();
