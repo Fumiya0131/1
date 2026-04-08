@@ -1078,8 +1078,12 @@ function renderShop() {
     const janHtml = p.jan
       ? '<div class="pjan">JAN <strong>' + p.jan + '</strong></div>' : '';
     const typeBadge = p.type === '予約品'
-      ? '<div class="pbadge" style="background:#7C3AED;color:#fff;top:14px;right:14px;left:auto">予約品' +
-        (p.arrivalDate ? '　' + p.arrivalDate : '') + '</div>'
+      ? (function(d){
+          if (!d) return '<div class="pbadge" style="background:#7C3AED;color:#fff;top:14px;right:14px;left:auto">予約品</div>';
+          const dt = new Date(d);
+          const str = dt.getFullYear() + '/' + (dt.getMonth()+1) + '/' + dt.getDate();
+          return '<div class="pbadge" style="background:#7C3AED;color:#fff;top:14px;right:14px;left:auto">' + str + '</div>';
+        })(p.arrivalDate)
       : '';
     const deliveryHtml = p.delivery
       ? (function(d){
