@@ -78,7 +78,7 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
 /* カードボディ */
 .pcard-body{padding:18px 18px 16px;flex:1;display:flex;flex-direction:column;background:#fff;}
 .pcat-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:#F5F6F8;color:#6B7280;border-radius:6px;padding:3px 10px;margin-bottom:10px;}
-.pname{font-family:'M PLUS Rounded 1c','BIZ UDPGothic',sans-serif;font-size:18px;font-weight:700;color:#1C1C1E !important;margin-bottom:8px;line-height:1.5;letter-spacing:.01em;}
+.pname{font-family:'Noto Sans JP','BIZ UDPGothic',sans-serif;font-size:16px;font-weight:700;color:#1C1C1E !important;margin-bottom:8px;line-height:1.6;letter-spacing:.02em;}
 /* JAN・URL */
 .pjan{font-size:11px;color:#6B7280;margin-bottom:5px;display:flex;align-items:center;gap:6px;background:#F5F6F8;padding:4px 8px;border-radius:6px;}
 .pjan strong{color:#374151;font-family:monospace;letter-spacing:.06em;font-size:12px;}
@@ -340,10 +340,12 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
 .privacy-badge{display:inline-block;font-size:9px;padding:2px 7px;border-radius:10px;background:var(--idim);border:1px solid rgba(91,156,246,.3);color:var(--info);}
 
 /* SUCCESS */
-.success-screen{text-align:center;padding:44px 24px;}
-.success-icon{font-size:46px;margin-bottom:14px;}
-.success-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:8px;}
-.success-sub{font-size:13px;color:var(--muted);margin-bottom:26px;line-height:1.8;}
+.success-screen{text-align:center;padding:40px 28px;}
+.success-icon{font-size:64px;margin-bottom:16px;animation:pop .4s cubic-bezier(.34,1.56,.64,1);}
+@keyframes pop{0%{transform:scale(0)}100%{transform:scale(1)}}
+.success-title{font-size:22px;font-weight:800;color:#16A34A;margin-bottom:10px;}
+.success-sub{font-size:13px;color:#555;margin-bottom:24px;line-height:1.9;}
+.success-order-no{display:inline-block;background:#F5F6F8;border:1px solid #E5E7EB;border-radius:6px;padding:6px 16px;font-family:monospace;font-size:13px;color:#1C1C1E;margin-bottom:16px;}
 
 /* LOADING */
 .loading-wrap{text-align:center;padding:60px 24px;}
@@ -878,12 +880,17 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
 
 <!-- ── 完了モーダル ── -->
 <div class="overlay" id="success-overlay">
-  <div class="modal">
+  <div class="modal" style="max-width:420px">
     <div class="success-screen">
-      <div class="success-icon">✅</div>
-      <div class="success-title">注文を受け付けました</div>
+      <div class="success-icon">🎉</div>
+      <div class="success-title">ご注文ありがとうございます！</div>
+      <div class="success-order-no" id="success-order-no"></div>
       <div class="success-sub" id="success-msg"></div>
-      <button class="btn btn-primary" onclick="closeOverlay('success-overlay')">商品一覧に戻る</button>
+      <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:12px 16px;font-size:12px;color:#166534;text-align:left;margin-bottom:20px">
+        ✉️ ご登録のメールアドレスに注文確認メールをお送りしました。<br>
+        商品入荷後に請求書をお送りいたします。
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="closeOverlay('success-overlay');switchPanel('shop')">商品一覧に戻る →</button>
     </div>
   </div>
 </div>
@@ -1413,9 +1420,12 @@ async function submitCartOrder() {
       if (el) el.value = '';
     });
     document.getElementById('co-agree').checked = false;
+    const orderNo = r?.orderNo || '';
+    document.getElementById('success-order-no').textContent = orderNo ? '注文番号：' + orderNo : '';
+    document.getElementById('success-order-no').style.display = orderNo ? 'inline-block' : 'none';
     document.getElementById('success-msg').innerHTML =
-      '<strong>' + name + '</strong> 様のご注文を受け付けました。<br>' + summary + '<br><br>担当者より順次ご連絡いたします。';
-    closeOverlay(''); openOverlay('success-overlay');
+      '<strong>' + name + '</strong> 様<br>' + summary;
+    openOverlay('success-overlay');
     switchPanel('shop');
   } else {
     showError('co-error', errors.join(', '));
@@ -1883,7 +1893,7 @@ function buildOrderRow(o, realIdx) {
     : '<button class="btn btn-i" style="font-size:11px;padding:4px 10px" onclick="openInvModal(' + realIdx + ')">📄 請求書発行</button>';
   const groupLabel = o.group === '在庫品'
     ? '<span class="tag tag-ok">在庫品</span>'
-    : '<span class="tag tag-reserve">' + (o.group||'予約品') + '</span>';
+    : '<span class="tag tag-reserve">予約品</span>';
   const itemList = (o.items||[]).map(i => i.name + '×' + i.qty + '個').join('、');
   return '<tr><td style="font-size:10px;font-family:monospace">' + (o.orderNo||'') + '</td>' +
     '<td style="font-size:11px">' + (o.datetime||'') + '</td>' +
