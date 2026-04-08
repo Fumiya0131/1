@@ -1383,10 +1383,11 @@ async function submitCartOrder() {
 
   let allOk = true;
   const errors = [];
+  let r = null;
 
   // GASへ送信（全商品を1注文番号でまとめて）
   try {
-    const r = await gasPost({
+    r = await gasPost({
       action: 'submitCartOrder',
       items: cart.map(item => ({ productId: item.id, qty: item.qty })),
       name, phone, email, address, building, discord, note
@@ -1425,8 +1426,8 @@ async function submitCartOrder() {
     document.getElementById('success-order-no').style.display = orderNo ? 'inline-block' : 'none';
     document.getElementById('success-msg').innerHTML =
       '<strong>' + name + '</strong> 様<br>' + summary;
-    openOverlay('success-overlay');
     switchPanel('shop');
+    setTimeout(() => openOverlay('success-overlay'), 50); // パネル切替後に表示
   } else {
     showError('co-error', errors.join(', '));
     document.getElementById('co-submit-btn').disabled = false;
