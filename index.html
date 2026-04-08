@@ -1217,14 +1217,14 @@ function openCartAddModal(id) {
   const p = products.find(x => x.id == id);
   if (!p) return;
   currentPid = id;
-  modalMaxQty = remain(p);
+  modalMaxQty = (p.type === '予約品') ? 99 : remain(p);
   modalQty = 1;
   currentOrderType = 'order'; // 予約購入で固定
   document.getElementById('m-cat').textContent   = p.category;
   document.getElementById('m-name').textContent  = p.name;
   document.getElementById('m-jan').textContent   = p.jan ? '(' + p.jan + ')' : '';
   document.getElementById('m-price').textContent = '¥' + Number(p.price).toLocaleString();
-  document.getElementById('m-remain-note').textContent = '残' + modalMaxQty + '個';
+  document.getElementById('m-remain-note').textContent = (p.type === '予約品') ? '予約品' : '残' + modalMaxQty + '個';
 
   updateModalQtyDisplay();
   openOverlay('cart-add-overlay');
@@ -1238,7 +1238,8 @@ function setOrderType(type) {
 
 function changeModalQty(delta) {
   const p = products.find(x => x.id == currentPid);
-  const max = currentOrderType === 'reserve' ? 99 : remain(p);
+  // 予約品は在庫上限なし、在庫品は残数が上限
+  const max = (p && p.type === '予約品') ? 99 : remain(p);
   modalQty = Math.max(1, Math.min(max, modalQty + delta));
   updateModalQtyDisplay();
 }
@@ -1256,7 +1257,7 @@ function addToCart() {
   currentOrderType = 'order';
   const existing = cart.find(i => i.id === p.id && i.type === currentOrderType);
   if (existing) {
-    const max = currentOrderType === 'reserve' ? 99 : remain(p);
+    const max = (p.type === '予約品') ? 99 : remain(p);
     existing.qty = Math.min(max, existing.qty + modalQty);
   } else {
     cart.push({ id: p.id, name: p.name, category: p.category, jan: p.jan||'',
@@ -1311,7 +1312,7 @@ function renderCart() {
 function changeCartQty(idx, delta) {
   const item = cart[idx];
   const p = products.find(x => x.id == item.id);
-  const max = item.type === 'reserve' ? 99 : remain(p);
+  const max = (p && p.type === '予約品') ? 99 : (p ? remain(p) : 1);
   item.qty = Math.max(1, Math.min(max, item.qty + delta));
   renderCart();
   updateCartBadge();
@@ -1351,6 +1352,7 @@ function renderCheckoutSummary() {
 
 // ── カート注文確定（複数商品） ──
 async function submitCartOrder() {
+  if (cart.length === 0) { showError('co-error', 'カートが空です'); return; }
   if (!document.getElementById('co-agree').checked) {
     showError('co-error', '注意事項への同意が必要です'); return;
   }
@@ -1386,7 +1388,7 @@ async function submitCartOrder() {
     else {
       cart.forEach(item => {
         const p = products.find(x => x.id == item.id);
-        if (p && p.type !== '予約品') {
+        if (p && p.type === '在庫品') {
           p.reserved = Number(p.reserved) + item.qty;
           p.remain   = Math.max(0, Number(p.remain) - item.qty);
         }
