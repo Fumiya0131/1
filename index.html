@@ -405,7 +405,7 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
 
 <main>
   <!-- SETUP BANNER -->
-  <div class="setup-banner" id="setup-banner">
+  <div class="setup-banner" id="setup-banner" style="display:none">
     <strong>⚙️ 初回設定：</strong> Google Apps ScriptのデプロイURLを入力してください。
     <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/XXXXXXXX/exec">
     <button class="setup-save-btn" onclick="saveGasUrl()">保存して接続</button>
@@ -903,7 +903,8 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
 
 <script>
 // ── STATE ─────────────────────────────────────────
-let GAS_URL = localStorage.getItem('gas_url') || '';
+let GAS_URL = 'https://script.google.com/macros/s/AKfycbz6Eh49ZDB5t19-GKn6hXKyG6HXTGHvLs5SguUvudxdnl3lzfR0pqCyKt0WHgl5F7bl/exec'; // 直接埋め込み
+localStorage.setItem('gas_url', GAS_URL);
 let products = [];
 let orderLog = JSON.parse(localStorage.getItem('local_orders') || '[]');
 let activeFilter = 'すべて';
