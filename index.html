@@ -398,7 +398,7 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
     <input class="gate-input" type="password" id="gate-pw" placeholder="••••••••"
       onkeydown="if(event.key==='Enter')checkGate()">
     <div class="gate-error" id="gate-error">パスワードが正しくありません</div>
-    <button class="gate-btn" onclick="checkGate()">入場する →</button>
+    <button class="gate-btn" id="gate-btn" onclick="checkGate()">入場する →</button>
   </div>
 </div>
 
@@ -637,6 +637,7 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
       <button class="anav" onclick="switchAdmin('customers',this)"><span class="aicon">👤</span>顧客情報</button>
       <button class="anav" onclick="switchAdmin('orders',this)"><span class="aicon">📋</span>注文ログ</button>
       <button class="anav" onclick="switchAdmin('settings',this)"><span class="aicon">⚙️</span>設定</button>
+      <button class="anav" onclick="switchAdmin('members',this)"><span class="aicon">👥</span>メンバー</button>
     </div>
 
     <!-- 在庫管理 -->
@@ -814,6 +815,29 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
       </div>
     </div>
 
+    <!-- メンバー管理 -->
+    <div class="asub" id="asub-members">
+      <div class="sec">メンバー管理 <span class="privacy-badge">社外秘</span></div>
+      <div class="info-box">個別パスワードを発行・管理します。削除するとそのメンバーは即ログイン不可になります。</div>
+      <div class="form-card" style="margin-bottom:16px">
+        <h3>メンバーを追加</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;margin-top:10px">
+          <div class="ff"><label>パスワード</label><input type="text" id="new-member-pw" placeholder="例：ABC123"></div>
+          <div class="ff"><label>名前（任意）</label><input type="text" id="new-member-name" placeholder="例：山田太郎"></div>
+          <button class="btn btn-primary" onclick="addMemberBtn()" style="height:38px">追加</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn btn-i" onclick="loadMembers()">🔄 最新データを取得</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="data-tbl">
+          <thead><tr><th>パスワード</th><th>名前</th><th>状態</th><th>最終ログイン</th><th>登録日</th><th>操作</th></tr></thead>
+          <tbody id="member-tbody"><tr><td colspan="6" class="no-data">「最新データを取得」をクリックしてください</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
   </div><!-- /admin panel -->
 </main>
 
@@ -924,33 +948,46 @@ main{max-width:1060px;margin:0 auto;padding:26px 18px;}
 <div class="toast" id="toast"></div>
 
 <script>
-// ── サイト入場パスワード ──────────────────────────
-const SITE_PASS = 'f05';
-const GATE_KEY  = 'site_authed';
+// ── サイト入場パスワード（個別メンバー認証） ────────
+const GATE_KEY = 'site_authed';
+let gateMemberName = '';
 
-function checkGate() {
-  const pw = document.getElementById('gate-pw').value;
-  if (pw === SITE_PASS || sessionStorage.getItem(GATE_KEY) === '1') {
-    sessionStorage.setItem(GATE_KEY, '1');
-    document.getElementById('site-gate').style.display = 'none';
-    document.getElementById('gate-error').style.display = 'none';
-  } else {
-    document.getElementById('gate-error').style.display = 'block';
-    document.getElementById('gate-pw').value = '';
-    document.getElementById('gate-pw').focus();
+async function checkGate() {
+  const pw  = document.getElementById('gate-pw').value.trim();
+  const err = document.getElementById('gate-error');
+  const btn = document.getElementById('gate-btn');
+  if (!pw) return;
+  btn.disabled = true;
+  btn.textContent = '確認中...';
+  err.style.display = 'none';
+  try {
+    const r = await gasGet({ action: 'checkMemberPassword', password: pw });
+    if (r?.success) {
+      sessionStorage.setItem(GATE_KEY, '1');
+      sessionStorage.setItem('member_name', r.name || '');
+      document.getElementById('site-gate').style.display = 'none';
+    } else {
+      err.textContent = r?.error || 'パスワードが正しくありません';
+      err.style.display = 'block';
+      document.getElementById('gate-pw').value = '';
+      document.getElementById('gate-pw').focus();
+    }
+  } catch(e) {
+    err.textContent = '通信エラーが発生しました。再度お試しください。';
+    err.style.display = 'block';
   }
+  btn.disabled = false;
+  btn.textContent = '入場する →';
 }
 
 // ページ読み込み時に認証チェック
 (function() {
   if (sessionStorage.getItem(GATE_KEY) === '1') {
-    // 認証済み → すぐ非表示
     window.addEventListener('DOMContentLoaded', function() {
       const gate = document.getElementById('site-gate');
       if (gate) gate.style.display = 'none';
     });
   } else {
-    // 未認証 → パスワード入力欄にフォーカス
     window.addEventListener('DOMContentLoaded', function() {
       const pw = document.getElementById('gate-pw');
       if (pw) setTimeout(() => pw.focus(), 100);
@@ -1612,6 +1649,81 @@ async function submitOrder() {
     document.getElementById('btn-submit').disabled = false;
     document.getElementById('submitting-msg').style.display = 'none';
   }
+}
+
+
+// ── メンバー管理 ──────────────────────────────────
+let memberList = [];
+
+async function loadMembers() {
+  try {
+    const r = await gasGet({ action: 'getMembers' });
+    if (r?.error) throw new Error(r.error);
+    memberList = r.members || [];
+    renderMembers();
+    showToast('メンバー一覧を取得しました（' + memberList.length + '件）');
+  } catch(e) { showToast('取得失敗: ' + e.message, true); }
+}
+
+function renderMembers() {
+  const tbody = document.getElementById('member-tbody');
+  if (memberList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="no-data">メンバーが登録されていません</td></tr>';
+    return;
+  }
+  tbody.innerHTML = memberList.map((m, idx) => {
+    const statusTag = m.enabled
+      ? '<span class="tag tag-ok">有効</span>'
+      : '<span class="tag tag-zero">無効</span>';
+    return `<tr>
+      <td style="font-family:monospace;font-weight:700">${m.password}</td>
+      <td>${m.name || '—'}</td>
+      <td>${statusTag}</td>
+      <td style="font-size:12px">${m.lastLogin}</td>
+      <td style="font-size:12px">${m.registeredAt || '—'}</td>
+      <td style="display:flex;gap:6px">
+        <button class="btn btn-i" style="font-size:11px" data-idx="${idx}" data-action="toggle" onclick="toggleMemberBtn(this)">${m.enabled ? '無効化' : '有効化'}</button>
+        <button class="btn" style="font-size:11px;background:#FEE2E2;color:#DC2626;border:none;border-radius:6px;padding:4px 10px;cursor:pointer" data-idx="${idx}" data-action="delete" onclick="deleteMemberBtn(this)">削除</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function addMemberBtn() {
+  const pw   = document.getElementById('new-member-pw').value.trim();
+  const name = document.getElementById('new-member-name').value.trim();
+  if (!pw) { showToast('パスワードを入力してください', true); return; }
+  try {
+    const r = await gasPost({ action: 'addMember', password: pw, name });
+    if (r?.error) throw new Error(r.error);
+    document.getElementById('new-member-pw').value = '';
+    document.getElementById('new-member-name').value = '';
+    showToast('メンバーを追加しました');
+    loadMembers();
+  } catch(e) { showToast('追加失敗: ' + e.message, true); }
+}
+
+async function toggleMemberBtn(el) {
+  const m = memberList[el.dataset.idx];
+  if (!m) return;
+  try {
+    const r = await gasPost({ action: 'toggleMember', password: m.password });
+    if (r?.error) throw new Error(r.error);
+    showToast(r.enabled ? '有効化しました' : '無効化しました');
+    loadMembers();
+  } catch(e) { showToast('失敗: ' + e.message, true); }
+}
+
+async function deleteMemberBtn(el) {
+  const m = memberList[el.dataset.idx];
+  if (!m) return;
+  if (!confirm('「' + (m.name||m.password) + '」を削除しますか？\nこのパスワードでのログインが即座に無効になります。')) return;
+  try {
+    const r = await gasPost({ action: 'deleteMember', password: m.password });
+    if (r?.error) throw new Error(r.error);
+    showToast('削除しました');
+    loadMembers();
+  } catch(e) { showToast('削除失敗: ' + e.message, true); }
 }
 
 // ── 編集モーダル ──────────────────────────────────
